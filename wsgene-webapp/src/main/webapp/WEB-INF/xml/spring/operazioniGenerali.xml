@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:tx="http://www.springframework.org/schema/tx"
+		xmlns:jee="http://www.springframework.org/schema/jee"
+		xmlns:jaxws="http://cxf.apache.org/jaxws"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+				http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd 
+				http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+				http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd" >
+
+	<!-- ========================= DAO DEFINITIONS: IBATIS IMPLEMENTATIONS ========================= -->
+
+	<bean id="datiCodificatiDao"
+		class="it.maggioli.eldasoft.gene.db.dao.ibatis.SqlMapDatiCodificatiDao">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+
+	<bean id="genChiaviDao"
+		class="it.maggioli.eldasoft.gene.db.dao.ibatis.SqlMapGenChiaviDao">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+
+	<bean id="comunicazioniDao"
+		class="it.maggioli.eldasoft.gene.db.dao.ibatis.SqlMapComunicazioniDao">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+
+	<bean id="documentiDao"
+		class="it.maggioli.eldasoft.gene.db.dao.ibatis.SqlMapDocumentiDao">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+
+	<!-- ========================= BEAN DEFINITIONS ========================= -->
+	<bean id="datiCodificatiManager" parent="defaultTransactionProxy">
+		<property name="target">
+			<bean class="it.maggioli.eldasoft.gene.bl.DatiCodificatiManager">
+				<property name="datiCodificatiDao" ref="datiCodificatiDao" />
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="genChiaviManagerTransactionProxy"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		abstract="true">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="transactionAttributes">
+			<props>
+				<prop key="getNextId">PROPAGATION_REQUIRES_NEW</prop>
+				<prop key="getMaxId">PROPAGATION_REQUIRED</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="genChiaviManager" parent="genChiaviManagerTransactionProxy">
+		<property name="target">
+			<bean class="it.maggioli.eldasoft.gene.bl.GenChiaviManager">
+				<property name="genChiaviDao" ref="genChiaviDao" />
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="comunicazioniManager" parent="defaultTransactionProxy">
+		<property name="target">
+			<bean class="it.maggioli.eldasoft.gene.bl.ComunicazioniManager">
+				<property name="comunicazioniDao" ref="comunicazioniDao" />
+				<property name="genChiaviManager" ref="genChiaviManager" />
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="documentiManager" parent="defaultTransactionProxy">
+		<property name="target">
+			<bean class="it.maggioli.eldasoft.gene.bl.DocumentiManager">
+				<property name="documentiDao" ref="documentiDao" />
+			</bean>
+		</property>
+	</bean>
+
+ 	<!-- implementazione del web service WSOperazioniGenerali
+ 	     (precedentemente noto come OperazioniGeneraliFacade) -->
+	<bean id="WSOperazioniGenerali"
+		class="it.maggioli.eldasoft.gene.ws.WSOperazioniGeneraliSoapImpl">
+		<property name="datiCodificatiManager" ref="datiCodificatiManager" />
+		<property name="comunicazioniManager" ref="comunicazioniManager" />
+		<property name="documentiManager" ref="documentiManager" />
+	</bean>
+	
+	<!-- ========================= WEB SERVICE DEFINITIONS ========================= -->
+
+	<!-- ATTENZIONE: il wizard per la generazione bottom-up genera un <jaxws:endpoint ...>
+		con il parametro xmlns:tns="http://www.eldasoft.it/WSOperazioniGenerali/"
+		non corretto. E' necessario quindi sostituire il valore dal POM.XML
+		altrimenti la webapp va in errore all'avvio.		
+		implementor="#WSOperazioniGenerali" indica quale bean è collegato allo
+		endpoint del servizio.
+		NB: per eseguire il servizio senza WSDL è necessario omettere il 
+		    parametro wsdlLocation qui e nell'annotazione dell'implementazione
+		    del servizio.		
+	-->
+	<jaxws:endpoint xmlns:tns="http://www.eldasoft.it/WSOperazioniGenerali/"
+		id="wsoperazionigeneralisoap" 
+		implementor="#WSOperazioniGenerali"
+		endpointName="tns:WSOperazioniGeneraliSOAP"
+		serviceName="tns:WSOperazioniGenerali" 
+		address="/WSOperazioniGeneraliSOAP">
+		
+		<jaxws:features>
+			<!-- Enable/Disable message payload logging -->
+			<!--  <bean class="org.apache.cxf.feature.LoggingFeature" />   -->
+		</jaxws:features>
+				
+		<!-- Enable/Disable MTOM for large file upload/download -->
+		<jaxws:properties>
+      		<!-- 
+      		mtom-enabled: This property is used to enable MTOM 
+      		
+      		<entry key="mtom-enabled" value="true"/>
+      		-->
+      		
+      		<!--
+      		attachment-directory: This property is used to specify the directory 
+      		to which binary data will be saved before streaming. This property 
+      		is related to the next property and works along with the next property.
+      		
+      		<entry key="attachment-directory" value="/tmp/"/>
+      		-->
+      		
+      		<!--
+      		attachement-memory-threshold: This property is use to set the memory 
+			threshold, that is use to keep the binary data in memory, data 
+			exceeding the memory threshold will be written to the directory 
+			specified by the attachement-directory property. Value of this 
+			property is set in bytes (4MB).
+			
+         	<entry key="attachment-memory-threshold" value="4000000"/>
+      		-->			 
+    	</jaxws:properties>
+	</jaxws:endpoint>	
+	
+</beans>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:tx="http://www.springframework.org/schema/tx"
+		xmlns:jee="http://www.springframework.org/schema/jee"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+				http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd 
+				http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd" >
+	
+	<import resource="classpath:META-INF/cxf/cxf.xml" />
+
+	<context:property-placeholder location="WEB-INF/classes/systemParams.properties"/>
+	
+	<jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/${jndi.jndiName}"/>
+	
+	<!-- Transaction manager for a single JDBC DataSource -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="defaultTransactionProxy"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		abstract="true">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="transactionAttributes">
+			<props>
+				<prop key="is*">PROPAGATION_NOT_SUPPORTED</prop>
+				<prop key="get*">PROPAGATION_NOT_SUPPORTED</prop>
+				<prop key="insert*">PROPAGATION_REQUIRED</prop>
+				<prop key="update*">PROPAGATION_REQUIRED</prop>
+				<prop key="delete*">PROPAGATION_REQUIRED</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- SqlMap setup for iBATIS Database Layer -->
+	<bean id="sqlMapClient"
+		class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation"
+			value="WEB-INF/xml/ibatis/sql-map-config.xml" />
+	</bean>
+	
+	<bean id="dbmsSpecs" class="it.eldasoft.utils.sql.DBMSSpecs">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="springAppContext" class="it.eldasoft.utils.spring.SpringAppContext" />
+
+</beans>

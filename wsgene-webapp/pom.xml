@@ -1,0 +1,128 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+  
+	<parent>
+		<groupId>it.maggioli.eldasoft.commons</groupId>
+		<artifactId>wsgene-pom</artifactId>
+		<version>1.9.0</version>
+	</parent>
+	<artifactId>wsgene-webapp</artifactId>
+  	<packaging>war</packaging>
+	<organization>
+		<name>Maggioli S.p.A.</name>
+	</organization>
+
+	<name>Webapp framework WS Gene</name>
+  	
+	<dependencies>
+		<dependency>
+			<groupId>it.maggioli.eldasoft.commons</groupId>
+			<artifactId>wsgene-engine</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+	
+	<profiles>
+         <profile>
+            <id>env-dev</id>
+            <activation>
+				<activeByDefault>true</activeByDefault>
+                <property>
+					<!-- Activate: mvn -Denv=dev <phase> -->
+                    <name>env</name>
+                    <value>dev</value>
+                </property>
+            </activation>
+			<build>
+				<filters>
+					<filter>src/main/filters/nofilter.properties</filter>
+				</filters>
+			</build>
+         </profile>
+         <profile>
+            <id>env-test</id>
+            <activation>
+                <property>
+					<!-- Activate: mvn -Denv=test <phase> -->
+                    <name>env</name>
+                    <value>test</value>
+                </property>
+            </activation>
+			<build>
+				<filters>
+					<filter>src/main/filters/test.properties</filter>
+				</filters>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-war-plugin</artifactId>
+						<configuration>
+							<warSourceExcludes>META-INF/context*.xml</warSourceExcludes>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>filter-context</id>
+								<phase>process-sources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${project.build.directory}/war/work/META-INF</outputDirectory>
+									<resources>          
+										<resource>
+											<directory>src/main/webapp/META-INF</directory>
+											<includes>
+												<include>context*.xml</include>
+											</includes>
+											<filtering>true</filtering>
+										</resource>
+									</resources>              
+								</configuration>            
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.7</version>
+						<executions>                   	   
+							<execution>
+								<!-- task di generazione file di context -->
+								<id>context-antrun</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>                        
+								<configuration>
+									<target>
+										<echo>Generazione ${build.finalName}.xml in corso...</echo>
+										<copy file="${project.build.directory}/war/work/META-INF/context.xml" tofile="${project.build.directory}/${build.finalName}.xml" />
+										<copy file="${project.build.directory}/war/work/META-INF/context-tomcat8.xml" tofile="${project.build.directory}/${build.finalName}-tomcat8.xml" />
+										<echo>Generazione ${build.finalName}.xml effettuato...</echo>
+									</target>
+								</configuration>
+							</execution>    
+						</executions>
+					</plugin>						
+				</plugins>
+			</build>
+         </profile>
+	</profiles>
+
+	<build>
+  		<finalName>WSGene</finalName>
+  			
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+	</build>
+  
+</project>

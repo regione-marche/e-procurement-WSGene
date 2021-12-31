@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Documenti">
+
+	<resultMap id="resultGetDocumentoDigitale" class="it.maggioli.eldasoft.gene.ws.FileType">
+		<result property="file" column="contfile" columnIndex="1" jdbcType="BINARY" />
+		<result property="nome" column="nome" columnIndex="2" />
+	</resultMap>
+	
+	<select id="getDocumentoDigitale" parameterClass="java.util.HashMap" resultMap="resultGetDocumentoDigitale">
+	SELECT digogg as contfile, dignomdoc as nome 
+	FROM v_ws_documenti_digitali
+	WHERE iddocdig = #id#
+	AND idprg = #prg#
+	<isEmpty property="username" prepend="and"> usernome IS NULL</isEmpty>
+	<isNotEmpty property="username" prepend="and"> usernome = #username#</isNotEmpty>
+	</select>
+
+	<select id="getUsernameDocumentoRiservato" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+	SELECT dd.usernome, dd.idprg, dd.iddocdig id, dignomdoc
+	FROM v_ws_documenti_digitali dd 
+	     INNER JOIN documgara dg ON (dd.digkey1=dg.codgar and dd.iddocdig=dg.iddocdg)
+	WHERE dg.gruppo = 6
+ 	AND dd.iddocdig = #id#
+	ANd dd.idprg = #prg#
+	</select>
+
+</sqlMap>

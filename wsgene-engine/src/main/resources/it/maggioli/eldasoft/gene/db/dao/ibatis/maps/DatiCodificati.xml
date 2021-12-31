@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="DatiCodificati">
+
+	<resultMap id="resultDatoCodificato" class="it.maggioli.eldasoft.wsOperazioniGenerali.daticomuni.DatoCodificatoType">
+		<result property="codice" column="codice" columnIndex="1" />
+		<result property="descrizione" column="descrizione" columnIndex="2" />
+	</resultMap>
+
+  <select id="getTipiTab1" parameterClass="java.lang.String" resultMap="resultDatoCodificato">
+  select tab1tip as codice, tab1desc as descrizione from tab1 where tab1cod = #codice# and (tab1arc is null or tab1arc = '2') order by tab1nord, tab1tip
+  </select>
+
+  <select id="getTipiTab2" parameterClass="java.lang.String" resultMap="resultDatoCodificato">
+  select tab2tip as codice, tab2d2 as descrizione from tab2 where tab2cod = #codice# and (tab2arc is null or tab2arc = '2') order by tab2nord, tab2tip
+  </select>
+
+  <select id="getTipiTab3" parameterClass="java.lang.String" resultMap="resultDatoCodificato">
+  select tab3tip as codice, tab3desc as descrizione from tab3 where tab3cod = #codice# and (tab3arc is null or tab3arc = '2') order by tab3nord, tab3desc
+  </select>
+  
+  <select id="getTipiTab5" parameterClass="java.lang.String" resultMap="resultDatoCodificato">
+  select tab5tip as codice, tab5desc as descrizione from tab5 where tab5cod = #codice# and (tab5arc is null or tab5arc = '2') order by tab5nord, tab5desc
+  </select>
+
+  <select id="getNazioniCodificate" parameterClass="java.lang.String" resultMap="resultDatoCodificato">
+  select tab2d2 as codice, tab2d1 as descrizione from tab2 where tab2cod = 'G_z23' and (tab2arc is null or tab2arc = '2') order by tab2nord, tab2tip
+  </select>
+</sqlMap>
